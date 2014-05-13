@@ -23,5 +23,5 @@ REQUEST = {
 		"X-Requested-With" : "XMLHttpRequest"
 	},
 	"encoding": 'utf-8'
-
 }
+

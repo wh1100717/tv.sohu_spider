@@ -128,7 +128,7 @@ class Spider:
 					sleep_time = random.randrange(0, self._unti_ban['download_delay'])
 				else:
 					sleep_time = self._unti_ban('download_delay')
-				print "Spider will sleep %s seconds" %(float(sleep_time)/1000)
+				print "Sleep %s seconds" %(float(sleep_time)/1000)
 				time.sleep(float(sleep_time)/1000)
 			while True:
 				time.sleep(0.1)
@@ -141,11 +141,10 @@ class Spider:
 					if not url: 
 						print "the redis set is empty, please wait a moment"
 						break
-					print "start a new thread with url: ", url
 					thread.start_new_thread(self.thread_proc, (time.ctime(),url))
 					self._current_thread_count += 1
 					max_videos -= 1
-					print "%s threads is alive" %self._current_thread_count
+					print "new thread(%s alived) with url: %s" %(self._current_thread_count, url)
 					break
 		print "crawl done"
 
