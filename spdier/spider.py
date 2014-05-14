@@ -55,6 +55,7 @@ class Spider:
 		self._current_thread_count = 0
 
 	def _get_html(self, url):
+		url = StringUtil.process_url(url)
 		res = requests.get(url)
 		user_agent = {'User-agent': 'Mozilla/5.0'}
 		headers = {
@@ -91,7 +92,7 @@ class Spider:
 		return True if re.match(self._target['view_detail_page_reg'], url) else False
 
 	
-	def _pipelines(self, url, html):
+	def _pipelines(self, html):
 		pass
 
 	def _clear_redis(self):
@@ -116,6 +117,8 @@ class Spider:
 
 	def start(self,config):
 		print "start"
+		if config['max_threads']:
+			self._thread_max = config['max_threads']
 		url = self._target['host']
 		max_videos = config['max_videos']
 		#清空表数据(测试用，实际上不需要)

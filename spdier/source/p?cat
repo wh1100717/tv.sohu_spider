@@ -1,0 +1,71 @@
+http://p.aty.sohu.com/p?cat=251366993;261789159;261789173;279503390;362699707;398906850&pos=cp_100_1|cp_101_1|cp_102_1|rec_100_1|cp_64_1|cp_103_1|cp_104_1&al=5156159&qd=&pageUrl=http%3A//tv.sohu.com/20140428/n398906850.shtml
+
+
+_sohuHD_page_adsContent = [{
+    id: 'cp_64_1',
+    elid: 'cp_64_1',
+    type: 'cp',
+    ctype: 'code',
+    title: '',
+    src: 'http://images.sohu.com/ytv/BJ/BJSC/3005020140403100604.html',
+    width: 300,
+    height: 50,
+    link: 'http://pg.aty.sohu.com/goto/http%253A%252F%252Fju.mmstat.com%252F%253Furl%253Dhttp%253A%252F%252Fwww.tmall.com%252Fgo%252Fact%252Ftmall%252F2013%252Fnianhuo%252Fnew%252Fzhc.php%253Fspm%253Da1z15.66.1313.6910%2526ad_id%253D100107976574eb8a398d%2526am_id%253D%2526cm_id%253D%2526pm_id%253D?c=1&s1=360&p=cp_64_1&bar=7416&ac=5015&ad=32869&pt=9150&b=58149&bk=33542396&al=5156159&uv=13997261769345459803&loc=CN11&rip=124.202.197.154',
+    pingback: 'http://pm.aty.sohu.com/pvlog?c=1&s1=360&p=cp_64_1&bar=7416&ac=5015&ad=32869&pt=9150&b=58149&bk=33542396&al=5156159&uv=13997261769345459803&loc=CN11&rip=124.202.197.154&vp=s&type=2',
+    clickpingback: 'http://pg.aty.sohu.com/goto?c=1&s1=360&p=cp_64_1&bar=7416&ac=5015&ad=32869&pt=9150&b=58149&bk=33542396&al=5156159&uv=13997261769345459803&loc=CN11&rip=124.202.197.154',
+    allowscriptaccess: 'always'
+},
+{
+    id: 'cp_100_1',
+    elid: 'cp_100_1',
+    type: 'cp',
+    ctype: 'code',
+    title: '',
+    src: 'http://images.sohu.com/ytv/BJ/lianmeng/6209020130702110506.html',
+    width: 600,
+    height: 90,
+    link: '',
+    pingback: 'http://pm.aty.sohu.com/pvlog?c=1&s1=360&p=cp_100_1&bar=11136&ac=5015&ad=32879&pt=9150&b=58038&bk=33594226&al=5156159&uv=13997261769345459803&loc=CN11&rip=124.202.197.154&vp=s&type=2',
+    clickpingback: 'http://pg.aty.sohu.com/goto?c=1&s1=360&p=cp_100_1&bar=11136&ac=5015&ad=32879&pt=9150&b=58038&bk=33594226&al=5156159&uv=13997261769345459803&loc=CN11&rip=124.202.197.154',
+    allowscriptaccess: 'always'
+},
+{
+    id: 'cp_101_1',
+    elid: 'cp_101_1',
+    type: 'cp',
+    ctype: 'code',
+    title: '',
+    src: 'http://images.sohu.com/ytv/BJ/BJSC/5809020130626113719.html',
+    width: 580,
+    height: 90,
+    link: '',
+    pingback: 'http://pm.aty.sohu.com/pvlog?c=1&s1=360&p=cp_101_1&bar=11138&ac=5015&ad=32880&pt=9150&b=58044&bk=33592766&al=5156159&uv=13997261769345459803&loc=CN11&rip=124.202.197.154&vp=s&type=2',
+    clickpingback: 'http://pg.aty.sohu.com/goto?c=1&s1=360&p=cp_101_1&bar=11138&ac=5015&ad=32880&pt=9150&b=58044&bk=33592766&al=5156159&uv=13997261769345459803&loc=CN11&rip=124.202.197.154',
+    allowscriptaccess: 'always'
+},
+{
+    id: 'cp_102_1',
+    elid: 'cp_102_1',
+    type: 'cp',
+    ctype: 'code',
+    title: '',
+    src: 'http://images.sohu.com/ytv/BJ/taobao/30010020120822041955.html',
+    width: 300,
+    height: 100,
+    link: '',
+    pingback: 'http://pm.aty.sohu.com/pvlog?c=1&s1=360&p=cp_102_1&bar=11140&ac=5015&ad=32872&pt=9150&b=58043&bk=33593131&al=5156159&uv=13997261769345459803&loc=CN11&rip=124.202.197.154&vp=s&type=2',
+    clickpingback: 'http://pg.aty.sohu.com/goto?c=1&s1=360&p=cp_102_1&bar=11140&ac=5015&ad=32872&pt=9150&b=58043&bk=33593131&al=5156159&uv=13997261769345459803&loc=CN11&rip=124.202.197.154',
+    allowscriptaccess: 'always'
+},
+{
+    id: 'rec_100_1',
+    elid: 'rec_100_1',
+    type: 'rec',
+    ctype: 'img',
+    src: '',
+    width: 0,
+    height: 0,
+    link: '',
+    pingback: 'http://pm.aty.sohu.com/pvlog?c=1&s1=360&p=rec_100_1&bar=11142&al=5156159&uv=13997261769345459803&loc=CN11&rip=124.202.197.154',
+    clickpingback: 'http://pg.aty.sohu.com/goto?c=1&s1=360&p=rec_100_1&bar=11142'
+}];

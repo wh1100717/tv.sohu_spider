@@ -1,150 +1,3 @@
-#!/usr/bin/env python
-#-*- coding: utf-8 -*-
-
-from util import RedisUtil
-from BeautifulSoup import BeautifulSoup
-from util.StringUtil import *
-import requests
-import json
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
-
-
-class Pipelines:
-
-	def __init__(self, html):
-		self.html = html
-
-	def process(self):
-		self.get_content()
-		pass
-
-	def get_content(self):
-		soup = BeautifulSoup(self.html)
-		video = {}
-
-		str_config = soup.findAll('script')[3].contents[0]
-		video['vid'] = get_config_value(str_config, 'vid')
-		video['nid'] = get_config_value(str_config, 'nid')
-		video['pid'] = get_config_value(str_config, 'pid')
-		video['cover'] = get_config_value(str_config, 'cover')
-		video['playlistId'] = get_config_value(str_config, 'playlistId')
-		video['cid'] = get_config_value(str_config, 'cid')
-		video['subcid'] = get_config_value(str_config, 'subcid')
-		video['osubcid'] = get_config_value(str_config, 'osubcid')
-		video['category'] = get_config_value(str_config, 'category')
-		video['cateCode'] = get_config_value(str_config, 'cateCode')
-		video['pianhua'] = get_config_value(str_config, 'pianhua')
-		video['tag'] = get_config_value(str_config, 'tag')
-		video['tvid'] = get_config_value(str_config, 'tvid')
-		video['playerSpaceId'] = get_config_value(str_config, 'playerSpaceId')
-
-		count_url = "http://count.vrs.sohu.com/count/stat.do?videoId=" + video['vid'] + \
-		"&tvid=" + video['tvid'] + \
-		"&playlistId=" + video['playlistId'] + \
-		"&categoryId=" + video['subcid'] + \
-		"&catecode=" + video['cateCode'] + \
-		"&plat=flash&os=MacOS10.9.2&online=0&type=vms&t=1399992400861.4104111"
-
-		#播放量
-		# url = "http://count.vrs.sohu.com/count/stat.do?videoId=1766750&tvid=1265734&playlistId=5696708&categoryId=158&catecode=122102&uid=13950525923672874988&plat=flash&os=MacOS10.9.2&online=0&type=vms&r=http%3A//tv.sohu.com/20140513/n399512567.shtml&t=1399993714380.2917"
-		res  = requests.get(count_url)
-		str_count = res.text
-		video['count'] = str_count[str_count.find("=")+1:]
-
-		#顶踩数
-		#这个真心无力吐槽......
-		status_url = "http://score.my.tv.sohu.com/digg/get.do?vid=" + video['vid'] + \
-		"&type=" + video['cid'] + "&callback=omg&_=1399997399119"
-		res = requests.get(status_url)
-		str_status = res.text
-		str_status = str_status[str_status.find("{"):str_status.rfind("}") + 1]
-		status = json.loads(str_status)
-		video['upCount'] = status['upCount']
-		video['downCount'] = status['downCount']
-
-		#发布时间 | 时长 | 来源 | 简介
-		# str_cfix = soup.find('div', {'id':'playlist'})
-		# info = str_cfix
-		# video['publishTime'] = str_cfix.findAll('li')[0].contents[0][3:-1].strip()
-		# video['length'] = str_cfix.find('li',{'class':'s h'}).contents[0][3:].strip()
-		# video['from'] = str_cfix.find('li',{'class':'h'}).contents[0][3:].strip()
-		# video['intro'] = str_cfix.find('p',{'class':'intro'}).contents[0].strip()
-
-		video['intro'] = soup.find('p', {'class':'intro'}).contents[0].strip()
-		info = soup.find('ul', {'class':'u cfix'})
-
-		info_list = info.findAll('li')
-		for i in info_list:
-			information = i.contents[0].strip()
-			index = information.find('：')
-			key = information[:index].strip()
-			val = information[index+1:].strip()
-			video[key] = val
-
-
-		# print "......................"
-
-
-		#评论
-		reply_url = "http://access.tv.sohu.com/reply/list/" + \
-			video['subcid'] + "_" +\
-			video['playlistId'] + "_" +\
-			video['vid'] + "_0_10.js"
-		# url = "http://access.tv.sohu.com/reply/list/176_5696708_1766750_0_10.js"
-		res = requests.get(reply_url)
-		str_reply = res.text
-		str_reply = str_reply[str_reply.find("{"):str_reply.rfind("}") + 1]
-		video['reply'] = json.loads(str_reply)
-
-		#标题
-		video['title'] = soup.find('div',{'id':'crumbsBar'}).find('h2')['title']
-		video['type'] = soup.find('div',{'class':'crumbs'}).findAll('a')[1].contents[0]
-
-		#视频地址
-		# 卡在获取来的http://123.126.104.14/sohu/6/|378|111.195.91.56|tDqYtJamfn2Ruijbm6pvdanVsMQtqOTFIIek7g..|1|0|2|4002|1根据何种规则进行替换这里。
-		vrs_flash_url = "http://hot.vrs.sohu.com/vrs_flash.action?vid=" + video['vid']
-		res = requests.get(vrs_flash_url)
-		vrs_flash = json.loads(res.text)
-		danteng_url = "http://%s/?prot=2&t=0.123123&file=%s&new=%s" %(vrs_flash['allot'], vrs_flash['data']['clipsURL'][0][23:], vrs_flash['data']['su'][0])
-
-		res = requests.get(danteng_url)
-		str_danteng = res.text
-		first_dash = str_danteng.find('|')
-		second_dash = str_danteng.find('|', first_dash + 1)
-		third_dash = str_danteng.find('|', second_dash + 1)
-		str_danteng = str_danteng[:first_dash] + vrs_flash['data']['su'][0] + "?key=" + str_danteng[third_dash+1:]
-		video['video_url'] = str_danteng[:str_danteng.find('|')]
-		#http://123.126.104.14/sohu/6/|378|111.195.91.56|tDqYtJamfn2Ruijbm6pvdanVsMQtqOTFIIek7g..|1|0|2|4002|1
-		#http://123.126.104.13/sohu/6/|378|111.195.91.56|ozPcB-FsCnlS9fEkepVYVVF277aTXbxQVh012g..|1|0|2|4002|1
-		#http://61.135.176.247/sohu/1/|172|111.195.91.56|jfxw6EyNPjTZgnv67JhKYC3v9rhAE4-D6lrQ0X4703c.|1|0|2|4002|1
-		#http://61.135.176.238/sohu/vod/MTAvMjM0LzYxL0xCajU5dnl3dm1NOXVJaE5Dbmowci5tcDQ9B.mp4?key=auVH5kPuW7oN9MB_TvB9nmEUjG4cCyRd9rJTaB4-pDU.&r=aHR0cDovL2RhdGEudm8yFzS6MZcxtxefujo2HpmTNLIxnpibmC&n=2&a=4002&cip=111.195.91.56&prod=ad
-
-		# # 换个思路，从m.tv.sohu.com获取实际文件下载地址
-		# # tv.sohu.com和m.tv.sohu.com对应的不是同一视频...不能这样直接转换
-		# # http://tv.sohu.com/20140513/n399512567.shtml -> http://m.tv.sohu.com/20140513/n399512567.shtml
-		# m_url = self.url[:7] + 'm.' + self.url[7:]
-		# print m_url
-
-		# #http://api.tv.sohu.com/v4/album/videos/1010790.json?api_key=695fe827ffeb7d74260a813025970bd5&page_size=6&plat=17&sver=4.0&partner=78&callback=videoPageListCallback&vid=621884&site=1
-		# video_url = ""
-
-
-		for i in video:
-			print i," : ",video[i]
-
-		# res  = requests.get(url)
-		# print res.text
-
-			# soup_res = soup.findAll(True, {'href': re.compile(self._target['grab_url_reg'])})
-		# print video['title']
-		# print video['type']
-		# print video['up']
-
-
-
-content = """
 <!doctype html>
 
 <html>
@@ -152,7 +5,7 @@ content = """
 
 
 <script type="text/javascript">
-  var pvinsight_page_ancestors = '251366993;314606944;399512567';
+  var pvinsight_page_ancestors = '251366993;261789159;261789173;279503390;362699707;398906850';
 </script>
 
 
@@ -163,22 +16,22 @@ content = """
 
 
 
-<title>火车上偶遇“亚洲女子天团”飙舞 人类已无法阻止广场舞了 - 搜狐视频</title>
+<title>《罪恶之城2》预告片 - 搜狐视频</title>
 <meta http-equiv="content-type" content="text/html; charset=GBK" />
-<meta name="keywords" content="火车;亚洲女子天团;飙舞;广场舞;" />
-<meta name="description" content="火车上偶遇“亚洲女子天团”飙舞 人类已无法阻止广场舞了,火车上偶遇“亚洲女子天团”飙舞 人类已无法阻止广场舞了在线观看" />
+<meta name="keywords" content="罪恶之城2预告片;罪恶之城2预告片高清;罪恶之城2预告片完整版;罪恶之城2预告片电影;动作片;惊悚片;" />
+<meta name="description" content="《罪恶之城2》预告片,《罪恶之城2》预告片在线观看" />
 <meta name="robots" content="all" />
-<meta name="album" content="V视角中国大妈" />   
-<meta name="category" content="新闻" /> 
-<meta property="og:videosrc" content="http://share.vrs.sohu.com/1766750/v.swf&autoplay=false" /> 
-<meta property="og:url" content="http://tv.sohu.com/20140513/n399512567.shtml"/>  
+<meta name="album" content="罪恶之城2片花" />   
+<meta name="category" content="电影" /> 
+<meta property="og:videosrc" content="http://share.vrs.sohu.com/1741216/v.swf&autoplay=false" /> 
+<meta property="og:url" content="http://tv.sohu.com/20140428/n398906850.shtml"/>  
 <meta property="og:type" content="video"/>  
-<meta property="og:video" content="http://share.vrs.sohu.com/1766750/v.swf&autoplay=false"/> 
+<meta property="og:video" content="http://share.vrs.sohu.com/1741216/v.swf&autoplay=false"/> 
 <meta property="og:video:type" content="application/x-shockwave-flash"/> 
 <meta property="og:site_name" content="搜狐视频" /> 
-<meta property="og:title" content="火车上偶遇“亚洲女子天团”飙舞 人类已无法阻止广场舞了 - 搜狐视频" /> 
-<meta property="og:image" content="http://photocdn.sohu.com/20140513/63a9417b-ebae-4cb2-ba76-394ca788882d_1766750_S_b.jpg" /> 
-<meta name="mobile-agent" content="format=html5;url=http://m.tv.sohu.com/20140513/n399512567.shtml">
+<meta property="og:title" content="《罪恶之城2》预告片 - 搜狐视频" /> 
+<meta property="og:image" content="http://photocdn.sohu.com/20140428/vrsb1247976.jpg" /> 
+<meta name="mobile-agent" content="format=html5;url=http://m.tv.sohu.com/20140428/n398906850.shtml">
 <script>
 (function(){ try{ var u = navigator.userAgent; var m = u.match(/iPhone|iPad|iPod/i); if((location.href.indexOf('#pc')===-1)&&(m || u.indexOf('Android') > -1 || u.indexOf('IEMobile') > -1)){ if (m&&m[0] === 'iPad') { location.href = location.href.replace('http://tv','http://pad.tv'); } else { location.href = location.href.replace('http://tv','http://m.tv'); } } } catch (e) {} })();
 
@@ -201,20 +54,20 @@ window.__tv_M && __tv_M.addTag('head');
 <link type="text/css" rel="stylesheet" href="http://css.tv.itc.cn/channel/play_ie7_v1.css" />
 <![endif]-->
 <script type="text/javascript">
-  var vid="1766750";
-  var nid = "399512567";
-  var pid ="314606944";
-  var cover="http://photocdn.sohu.com/20140513/63a9417b-ebae-4cb2-ba76-394ca788882d_1766750_S_b.jpg";  
-  var playlistId="5696708";
-  var o_playlistId="";
-    var cid="25";//一级分类id
-  var subcid="176";//二级分类id
+  var vid="1741216";
+  var nid = "398906850";
+  var pid ="362699707";
+  var cover="http://photocdn.sohu.com/20140428/vrsb1247976.jpg";  
+  var playlistId="5156159";
+  var o_playlistId="5156158";
+    var cid="1";//一级分类id
+  var subcid="7;234";//二级分类id
   var osubcid="";//二级分类的唯一项
-  var category="251366993;314606944;399512567";
-  var cateCode="122102;";
-  var pianhua = "0";
-  var tag = "火车 亚洲女子天团 飙舞 广场舞";
-  var tvid = "1265734";
+  var category="251366993;261789159;261789173;279503390;362699707;398906850";
+  var cateCode="100106;100118;";
+  var pianhua = "1";
+  var tag = "罪恶之城2预告片 罪恶之城2预告片高清 罪恶之城2预告片完整版 罪恶之城2预告片电影 动作片 惊悚片";
+  var tvid = "1247976";
   var playerSpaceId = "";
 </script>
 
@@ -375,9 +228,9 @@ window.__tv_M && __tv_M.addTag('nav');
 <div id="crumbsBar">
   <div class="area cfix">
     <div class="left">
-      <div class="crumbs"><a href='http://tv.sohu.com/news/'>新闻</a><span class="f-song">&gt;</span><a href ="javascript:sohuHD.searchKey('社会',7,25,1);">社会</a><span class="f-song">&gt;</span>V视角中国大妈</div>
+      <div class="crumbs"><a href='http://tv.sohu.com/movie/'>电影</a><span class="f-song">&gt;</span><a href ="javascript:sohuHD.searchKey('动作片',7,1,1);">动作片</a>/<a href ="javascript:sohuHD.searchKey('惊悚片',7,1,1);">惊悚片</a><span class="f-song">&gt;</span><a href="http://tv.sohu.com/s2013/sincity2/#pianhua">罪恶之城2片花</a></div>
       
-      <h2 title="火车上偶遇“亚洲女子天团”飙舞 人类已无法阻止广场舞了">火车上偶遇“亚洲女子天团”飙舞 人类已无法阻止广场舞了
+      <h2 title="罪恶之城2预告片">罪恶之城2预告片
       </h2>
     
     </div>
@@ -566,35 +419,47 @@ window.onbeforeunload = function (e) { e = e || window.event;try{unload_pingback
       <div class="info info-con">
         <ul class="u cfix">
           
-            <li>发布：2014-05-13 18:05
-            </li>
-            <li class="s">标签：
-              <span id="vtags">
-              <a href ="javascript:sohuHD.searchKey('火车',null,null);">火车</a> <a href ="javascript:sohuHD.searchKey('亚洲女子天团',null,null);">亚洲女子天团</a> <a href ="javascript:sohuHD.searchKey('飙舞',null,null);">飙舞</a> <a href ="javascript:sohuHD.searchKey('广场舞',null,null);">广场舞</a> 
-              </span>
-            </li>
-            <li class="h">来源：搜狐视频
-            </li>
+            <li>导演：<a target="_blank" href ="http://so.tv.sohu.com/star/NDY3NV+4pcC8v8uhpMPXwNU=.shtml">弗兰克·米勒</a> <a target="_blank" href ="http://so.tv.sohu.com/star/MTkwMTRfwt6yrszYoaTC3rXCwO+48dfI.shtml">罗伯特·罗德里格兹</a> </li> 
+            <li id="mainactor" class="s">主演：<a target="_blank" href ="http://so.tv.sohu.com/star/MTA1MDhfsrzCs8u5oaTN/sD7y7k=.shtml">布鲁斯·威利斯</a> <a target="_blank" href ="http://so.tv.sohu.com/star/MjUxNTNf0sHN3qGkuPHB1g==.shtml">伊娃·格林</a> <a target="_blank" href ="http://so.tv.sohu.com/star/NzUyNjk3X9S8yaq38qGkuN+1x6GkwLPOrMzY.shtml">约瑟夫·高登·莱维特</a> </li>
+            <li class="h">年份：<a href ="javascript:sohuHD.searchKey('2014',15,1);">2014</a> </li>
+            <li id="areabox" class="s h">产地：<a href ="javascript:sohuHD.searchKey('美国',4,1);">美国</a> </li>
             
-            
-              <li class="s h">时长：3分10秒
+              <li class="h">
+                时长：1分4秒
               </li>
             
-            <li class="h">类型：<a href ="javascript:sohuHD.searchKey('社会',7,25);">社会</a></li>
+            <li class="s h">类型：<a href ="javascript:sohuHD.searchKey('动作片',7,1);">动作片</a> / <a href ="javascript:sohuHD.searchKey('惊悚片',7,1);">惊悚片</a></li>       
              
         </ul>
-        <p class="intro">简介：【“亚洲女子天团”火车上飙舞】有网友上传视频，称在K1063车次(兰考—郑州段)火车上，一群大妈在火车上互飙广场舞，气氛很high，炫到不能直视……路人甲大爷在想什么？ 人类已无法阻止广场舞了这种娱乐方式确实罕见，打扑克什么的都弱爆了！。<a href="#" class="info-arrT">展开信息</a></p>
+        <p class="intro">简介：罪恶之城，那个依旧充满阴暗与腐朽的城市，即使是三个男人为了保护自己的爱人的努力，也被掩藏在了深深的黑夜之中。曾发誓保护罪恶之城的弱女人们的社会新闻记者德维特，还在与警察及黑势力周旋，但来自他过去、叫伊娃的女人再次出现在了他的面前。在这个似乎永远没有白天的城市里，爱情便意味着数不尽的麻烦。<a href="#" class="info-arrT">展开信息</a></p>
       </div>
       <div id="list"></div>
     </div>
         <!-- End:info -->
         <!-- Start:mod -->
     
-      
+      <div id="starmod" class="mod role-box cfix"> </div>
+<div class="mod mod-list" id="tuijian">
+            <div class="mod-tit"><h2>大家都在看</h2></div>
+            <div class="mod-con">
+                <ul class="list list-140 cfix h480">
+
+                </ul>
+            </div>
+        </div>
     
         <!-- End:mod -->
-              
-      
+        
+      <div class="adv"><div id="cp_100_1"></div>
+<script type="text/javascript">
+       _sohuHD.AD.init('cp_100_1');
+</script>
+<div class="playad" id="cp_103_1"></div>
+<script type="text/javascript">
+       _sohuHD.AD.init('cp_103_1');
+</script>
+</div>
+  
       <div class="mod mod-list mod-xbtj">
             <div class="mod-tit"><h2>猜你喜欢</h2></div>
             <div class="mod-con">
@@ -661,97 +526,6 @@ window.onbeforeunload = function (e) { e = e || window.event;try{unload_pingback
 
 
 </ul>
-            </div>
-        </div>
-      
-      <div class="adv"><div id="cp_100_1"></div>
-<script type="text/javascript">
-       _sohuHD.AD.init('cp_100_1');
-</script>
-<div class="playad" id="cp_103_1"></div>
-<script type="text/javascript">
-       _sohuHD.AD.init('cp_103_1');
-</script>
-</div>
-      
-      <div class="mod mod-list" id="hottv">
-            <div class="mod-tit cfix"><h2>卫视同步</h2></div>
-            <div class="mod-con">
-                <ul class="list list-140 cfix h524">
-
-
-<li rel="6807767" class="awatch">
-                    <div class="pic"><a class="apic" target="_blank" href="http://tv.sohu.com/20140504/n399126473.shtml" title="如果我爱你"><img lazysrc="http://i1.itc.cn/20140507/31fe_411c524c_da71_7d8b_a9eb_f7a9ff60d4e7_1.jpg" width="140" height="190" alt="如果我爱你" /></a><a title="高清" class="super">高清</a> </div>
-                    <strong><a target="_blank" href="http://tv.sohu.com/20140504/n399126473.shtml" title="如果我爱你">如果我爱你</a></strong> 
-                    <p>异域酒庄浪漫情缘</p>
-                    </li>
-
-<li rel="5135851" class="awatch">
-                   <div class="pic"><a class="apic" target="_blank" href="http://tv.sohu.com/20140423/n398662724.shtml" title="步步惊情 "><img lazysrc="http://i1.itc.cn/20140423/31fe_8f954081_ca88_bf2c_0842_056ca6684d28_1.jpg" width="140" height="190" alt="步步惊情" /></a><a title="高清" class="super">高清</a> </div>
-                    <strong><a target="_blank" href="http://tv.sohu.com/20140423/n398662724.shtml" title="步步惊情 ">步步惊情</a></strong> 
-                    <p>搜集四爷若曦台词有奖</p>
-                    </li>
-<li rel="6089908" class="awatch">
-                    <div class="pic"><a class="apic" target="_blank" href="http://tv.sohu.com/20140409/n397919777.shtml" title="宫锁连城"><img lazysrc="http://i1.itc.cn/20140410/31fe_44567767_3e70_8bf8_a4d5_6d221d26cc7e_1.jpg" width="140" height="190" alt="宫锁连城" /></a><a title="高清" class="super">高清</a> </div>
-                    <strong><a target="_blank" href="http://tv.sohu.com/20140409/n397919777.shtml" title="宫锁连城">宫锁连城</a></strong> 
-                    <p>于妈很忐忑观众很穿越</p>
- </li>
-
-<li rel="5360914" class="awatch">
-                   <div class="pic"><a class="apic" target="_blank" href="http://tv.sohu.com/20140421/n398595823.shtml" title="金玉良缘 "><img lazysrc="http://i0.itc.cn/20140422/31fe_b38be729_daec_95aa_3649_d52084d9a8ad_1.jpg" width="140" height="190" alt="金玉良缘 " /></a><a title="高清" class="super">高清</a> </div>
-                    <strong><a target="_blank" href="http://tv.sohu.com/20140421/n398595823.shtml" title="金玉良缘 ">金玉良缘 </a></strong> 
-                    <p>女蛇精病追男记</p>
-                    </li>
-                   
-
-<li rel="6572871" class="awatch">
-                   <div class="pic"><a class="apic" target="_blank" href="http://tv.sohu.com/20140404/n397793117.shtml" title="我爱男闺蜜"><img lazysrc="http://i2.itc.cn/20140408/31fe_eb25b17e_fcaa_f5e0_9041_87aa99664af3_1.jpg" width="140" height="190" alt="我爱男闺蜜" /></a><a title="高清" class="super">高清</a> </div>
-                    <strong><a target="_blank" href="http://tv.sohu.com/20140404/n397793117.shtml" title="我爱男闺蜜">我爱男闺蜜</a></strong> 
-                    <p>有了男闺蜜 且行且珍惜</p>
-                    </li>
-
-
-
-
-<li rel="6787217" class="awatch">
-                   <div class="pic"><a class="apic" target="_blank" href="http://tv.sohu.com/20140423/n398661820.shtml" title="大漠神枪"><img lazysrc="http://i1.itc.cn/20140430/31fe_2f2981ed_568b_ed63_698a_225d9870e501_1.jpg
-" width="140" height="190" alt="大漠神枪" /></a><a title="高清" class="super">高清</a> </div>
-                    <strong><a target="_blank" href="http://tv.sohu.com/20140423/n398661820.shtml" title="大漠神枪">大漠神枪</a></strong> 
-                    <p>元芳变牛仔 你怎么看？</p>
-                    </li>
-
-<li rel="5773413" class="awatch">
-                    <div class="pic"><a class="apic" target="_blank" href="http://tv.sohu.com/20140319/n396889747.shtml" title="一仆二主"><img lazysrc="http://i1.itc.cn/20140321/31fe_687a08c6_7970_4a93_e0df_f1cb68becf1c_1.jpg" width="140" height="190" alt="一仆二主" /></a><a title="高清" class="super">高清</a> </div>
-                    <strong><a target="_blank" href="http://tv.sohu.com/20140319/n396889747.shtml" title="一仆二主">一仆二主</a></strong> 
-                    <p>老少恋姐弟恋不如主仆恋</p>
-                    </li>
-
-<li rel="6614209" class="awatch">
-                    <div class="pic"><a class="apic" target="_blank" href="http://tv.sohu.com/20140423/n398714190.shtml" title="狙击部队"><img lazysrc="http://i2.itc.cn/20140430/31fe_7d07df71_a50d_22d8_8915_0fedcd8af6a8_1.jpg" width="140" height="190" alt="狙击部队" /></a><a title="高清" class="super">高清</a> </div>
-                    <strong><a target="_blank" href="http://tv.sohu.com/20140423/n398714190.shtml" title="狙击部队">狙击部队</a></strong> 
-                    <p>难得一见“不雷”抗战剧</p>
-                    </li>
-
-
-
-
-
-
-<li rel="6693023" class="awatch">
-                    <div class="pic"><a class="apic" target="_blank" href="http://tv.sohu.com/20140427/n398860621.shtml" title="小宝和老财"><img lazysrc="http://i0.itc.cn/20140430/31fe_c8806c84_1601_8e78_4733_2bc9c5608977_1.jpg
-" width="140" height="190" alt="小宝和老财" /></a><a title="高清" class="super">高清</a> </div>
-                    <strong><a target="_blank" href="http://tv.sohu.com/20140427/n398860621.shtml" title="小宝和老财">小宝和老财</a></strong> 
-                    <p>您且乐着 我给您来一段</p>
-                    </li>  
- <li rel="6693013" class="awatch">
-                    <div class="pic"><a class="apic" target="_blank" href="http://tv.sohu.com/20140429/n398996869.shtml" title="薛丁山"><img lazysrc="http://i2.itc.cn/20140507/31fe_49650991_7518_1e7c_490f_d788b7fae14b_1.jpg" width="140" height="190" alt="薛丁山 " /></a><a title="高清" class="super">高清</a> </div>
-                    <strong><a target="_blank" href="http://tv.sohu.com/20140429/n398996869.shtml" title="薛丁山">薛丁山 </a></strong> 
-                    <p>一大波隋唐英雄来袭</p>
-                    </li>
-
-
-
-                </ul>
             </div>
         </div>
     
@@ -1019,7 +793,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 		<div class="rTab_con cfix">
 			<!-- Start:pic_meta-->
 		        	<div class="pic_meta pic_meta_red">
-				            <a href="http://tv.sohu.com/20140513/n399467651.shtml?fid=514&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
+				            <a href="http://tv.sohu.com/20140513/n399518656.shtml?fid=514&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
         			<img src="http://photocdn.sohu.com/20140505/vrsab_ver6810369.jpg" width="100" height="135" alt="图片" />
 		</a>
 
@@ -1040,7 +814,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																1,707万
+																2,008万
 									</em>
 				</span>
 
@@ -1050,7 +824,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 		<!-- End:pic_meta -->
 			<!-- Start:pic_meta-->
 		        	<div class="pic_meta pic_meta_red">
-				            <a href="http://tv.sohu.com/20140512/n399467621.shtml?fid=514&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
+				            <a href="http://tv.sohu.com/20140513/n399518421.shtml?fid=514&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
         			<img src="http://photocdn.sohu.com/20140429/vrsab_ver6807767.jpg" width="100" height="135" alt="图片" />
 		</a>
 
@@ -1071,7 +845,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																1,005万
+																983万
 									</em>
 				</span>
 
@@ -1102,7 +876,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																991万
+																836万
 									</em>
 				</span>
 
@@ -1112,28 +886,59 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 		<!-- End:pic_meta -->
 			<!-- Start:pic_meta-->
 		        	<div class="pic_meta">
-								<a href="http://tv.sohu.com/20140421/n398595823.shtml?fid=514&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
-					<img src="http://photocdn.sohu.com/20130516/vrsab_ver5360914.jpg" width="100" height="135" alt="图片" />
+				            <a href="http://tv.sohu.com/20140513/n399518612.shtml?fid=514&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
+        			<img src="http://photocdn.sohu.com/20140417/vrsab_ver6693023.jpg" width="100" height="135" alt="图片" />
 		</a>
 
 		<div class="default">
 			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">4</i>金玉良缘</span>
+			<span class="maskTx"><i class="i1">4</i>小宝和老财</span>
 		</div>
 
 		<div class="over">
 			<span class="maskBg"></span>
 			<div class="maskTx">
-				<span class="cfix"><i class="i1">4</i><em class="e1">金玉良缘</em></span>
+				<span class="cfix"><i class="i1">4</i><em class="e1">小宝和老财</em></span>
 						                    <span class="cfix"><i class="i2">主演：</i>
 					<em class="e2">
-													                                <a href="http://so.tv.sohu.com/star/15711" target="_blank">霍建华</a>
-																																																																														                    </em>
+													                                <a href="http://so.tv.sohu.com/star/51520" target="_blank">范伟</a>
+																																																																																											                    </em>
 				</span>
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																458万
+																464万
+									</em>
+				</span>
+
+			</div>
+		</div>
+		</div>
+		<!-- End:pic_meta -->
+			<!-- Start:pic_meta-->
+		        	<div class="pic_meta">
+				            <a href="http://tv.sohu.com/20140513/n399518257.shtml?fid=514&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
+        			<img src="http://photocdn.sohu.com/20140504/vrsab_ver6810339.jpg" width="100" height="135" alt="图片" />
+		</a>
+
+		<div class="default">
+			<span class="maskBg"></span>
+			<span class="maskTx"><i class="i1">5</i>飞哥大英雄</span>
+		</div>
+
+		<div class="over">
+			<span class="maskBg"></span>
+			<div class="maskTx">
+				<span class="cfix"><i class="i1">5</i><em class="e1">飞哥大英雄</em></span>
+						                    <span class="cfix"><i class="i2">主演：</i>
+					<em class="e2">
+													                                <a href="http://so.tv.sohu.com/star/312851" target="_blank">雷佳音</a>
+																																																				                    </em>
+				</span>
+				
+				<span class="cfix"><i class="i2">播放：</i>
+				<em class="e2">
+																440万
 									</em>
 				</span>
 
@@ -1149,13 +954,13 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 
 		<div class="default">
 			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">5</i>狙击部队</span>
+			<span class="maskTx"><i class="i1">6</i>狙击部队</span>
 		</div>
 
 		<div class="over">
 			<span class="maskBg"></span>
 			<div class="maskTx">
-				<span class="cfix"><i class="i1">5</i><em class="e1">狙击部队</em></span>
+				<span class="cfix"><i class="i1">6</i><em class="e1">狙击部队</em></span>
 						                    <span class="cfix"><i class="i2">主演：</i>
 					<em class="e2">
 													                                <a href="http://so.tv.sohu.com/star/316331" target="_blank">王珂</a>
@@ -1164,38 +969,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																451万
-									</em>
-				</span>
-
-			</div>
-		</div>
-		</div>
-		<!-- End:pic_meta -->
-			<!-- Start:pic_meta-->
-		        	<div class="pic_meta">
-				            <a href="http://tv.sohu.com/20140512/n399467259.shtml?fid=514&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
-        			<img src="http://photocdn.sohu.com/20140417/vrsab_ver6693023.jpg" width="100" height="135" alt="图片" />
-		</a>
-
-		<div class="default">
-			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">6</i>小宝和老财</span>
-		</div>
-
-		<div class="over">
-			<span class="maskBg"></span>
-			<div class="maskTx">
-				<span class="cfix"><i class="i1">6</i><em class="e1">小宝和老财</em></span>
-						                    <span class="cfix"><i class="i2">主演：</i>
-					<em class="e2">
-													                                <a href="http://so.tv.sohu.com/star/51520" target="_blank">范伟</a>
-																																																																																											                    </em>
-				</span>
-				
-				<span class="cfix"><i class="i2">播放：</i>
-				<em class="e2">
-																448万
+																417万
 									</em>
 				</span>
 
@@ -1208,28 +982,28 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 		<div class="rTab_con cfix">
 			<!-- Start:pic_meta-->
 		        	<div class="pic_meta pic_meta_red">
-				            <a href="http://tv.sohu.com/20140512/n399446325.shtml?fid=515&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
-        			<img src="http://photocdn.sohu.com/20140421/vrsab_ver6787218.jpg" width="100" height="135" alt="图片" />
+				            <a href="http://tv.sohu.com/20140513/n399494050.shtml?fid=515&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
+        			<img src="http://photocdn.sohu.com/20140505/vrsab_ver6810354.jpg" width="100" height="135" alt="图片" />
 		</a>
 
 		<div class="default">
 			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">1</i>蛇蝎女佣第2季</span>
+			<span class="maskTx"><i class="i1">1</i>24小时第9季</span>
 		</div>
 
 		<div class="over">
 			<span class="maskBg"></span>
 			<div class="maskTx">
-				<span class="cfix"><i class="i1">1</i><em class="e1">蛇蝎女佣第2季</em></span>
+				<span class="cfix"><i class="i1">1</i><em class="e1">24小时第9季</em></span>
 						                    <span class="cfix"><i class="i2">主演：</i>
 					<em class="e2">
-													                                <a href="http://so.tv.sohu.com/star/68" target="_blank">罗塞莉·桑切斯</a>
-																																																																	                    </em>
+													                                <a href="http://so.tv.sohu.com/star/53569" target="_blank">基弗·萨瑟兰</a>
+																																																				                    </em>
 				</span>
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																81万
+																69万
 									</em>
 				</span>
 
@@ -1260,7 +1034,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																57万
+																58万
 									</em>
 				</span>
 
@@ -1270,19 +1044,50 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 		<!-- End:pic_meta -->
 			<!-- Start:pic_meta-->
 		        	<div class="pic_meta pic_meta_red">
+				            <a href="http://tv.sohu.com/20140512/n399446325.shtml?fid=515&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
+        			<img src="http://photocdn.sohu.com/20140421/vrsab_ver6787218.jpg" width="100" height="135" alt="图片" />
+		</a>
+
+		<div class="default">
+			<span class="maskBg"></span>
+			<span class="maskTx"><i class="i1">3</i>蛇蝎女佣第2季</span>
+		</div>
+
+		<div class="over">
+			<span class="maskBg"></span>
+			<div class="maskTx">
+				<span class="cfix"><i class="i1">3</i><em class="e1">蛇蝎女佣第2季</em></span>
+						                    <span class="cfix"><i class="i2">主演：</i>
+					<em class="e2">
+													                                <a href="http://so.tv.sohu.com/star/68" target="_blank">罗塞莉·桑切斯</a>
+																																																																	                    </em>
+				</span>
+				
+				<span class="cfix"><i class="i2">播放：</i>
+				<em class="e2">
+																42万
+									</em>
+				</span>
+
+			</div>
+		</div>
+		</div>
+		<!-- End:pic_meta -->
+			<!-- Start:pic_meta-->
+		        	<div class="pic_meta">
 				            <a href="http://tv.sohu.com/20140508/n399295737.shtml?fid=515&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
         			<img src="http://photocdn.sohu.com/20130814/vrsab_ver5703605.jpg" width="100" height="135" alt="图片" />
 		</a>
 
 		<div class="default">
 			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">3</i>绿箭侠第2季</span>
+			<span class="maskTx"><i class="i1">4</i>绿箭侠第2季</span>
 		</div>
 
 		<div class="over">
 			<span class="maskBg"></span>
 			<div class="maskTx">
-				<span class="cfix"><i class="i1">3</i><em class="e1">绿箭侠第2季</em></span>
+				<span class="cfix"><i class="i1">4</i><em class="e1">绿箭侠第2季</em></span>
 						                    <span class="cfix"><i class="i2">主演：</i>
 					<em class="e2">
 													                                <a href="http://so.tv.sohu.com/star/17933" target="_blank">薇拉·贺兰德</a>
@@ -1291,7 +1096,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																38万
+																35万
 									</em>
 				</span>
 
@@ -1307,13 +1112,13 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 
 		<div class="default">
 			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">4</i>纸牌屋第2季</span>
+			<span class="maskTx"><i class="i1">5</i>纸牌屋第2季</span>
 		</div>
 
 		<div class="over">
 			<span class="maskBg"></span>
 			<div class="maskTx">
-				<span class="cfix"><i class="i1">4</i><em class="e1">纸牌屋第2季</em></span>
+				<span class="cfix"><i class="i1">5</i><em class="e1">纸牌屋第2季</em></span>
 						                    <span class="cfix"><i class="i2">主演：</i>
 					<em class="e2">
 													                                <a href="http://so.tv.sohu.com/star/54426" target="_blank">凯文·史派西</a>
@@ -1332,59 +1137,28 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 		<!-- End:pic_meta -->
 			<!-- Start:pic_meta-->
 		        	<div class="pic_meta">
-				            <a href="http://tv.sohu.com/20140507/n399248243.shtml?fid=515&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
-        			<img src="http://photocdn.sohu.com/20130711/vrsab_ver5590402.jpg" width="100" height="135" alt="图片" />
+								<a href="http://tv.sohu.com/20130924/n387132939.shtml?fid=515&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
+					<img src="http://photocdn.sohu.com/20130807/vrsab_ver5690706.jpg" width="100" height="135" alt="图片" />
 		</a>
 
 		<div class="default">
 			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">5</i>神盾局特工第1季</span>
+			<span class="maskTx"><i class="i1">6</i>黑名单第1季</span>
 		</div>
 
 		<div class="over">
 			<span class="maskBg"></span>
 			<div class="maskTx">
-				<span class="cfix"><i class="i1">5</i><em class="e1">神盾局特工第1季</em></span>
+				<span class="cfix"><i class="i1">6</i><em class="e1">黑名单第1季</em></span>
 						                    <span class="cfix"><i class="i2">主演：</i>
 					<em class="e2">
-													                                <a href="http://so.tv.sohu.com/star/84" target="_blank">克拉克·格雷格</a>
-																																																																	                    </em>
+													                                <a href="http://so.tv.sohu.com/star/6967" target="_blank">詹姆斯·斯派德</a>
+																																																				                    </em>
 				</span>
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																28万
-									</em>
-				</span>
-
-			</div>
-		</div>
-		</div>
-		<!-- End:pic_meta -->
-			<!-- Start:pic_meta-->
-		        	<div class="pic_meta">
-								<a href="http://tv.sohu.com/20130914/n386591910.shtml?fid=515&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
-					<img src="http://photocdn.sohu.com/20130815/vrsab_ver5703631.jpg" width="100" height="135" alt="图片" />
-		</a>
-
-		<div class="default">
-			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">6</i>越狱第1季</span>
-		</div>
-
-		<div class="over">
-			<span class="maskBg"></span>
-			<div class="maskTx">
-				<span class="cfix"><i class="i1">6</i><em class="e1">越狱第1季</em></span>
-						                    <span class="cfix"><i class="i2">主演：</i>
-					<em class="e2">
-													                                <a href="http://so.tv.sohu.com/star/41024" target="_blank">温特沃斯·米勒</a>
-																																							                    </em>
-				</span>
-				
-				<span class="cfix"><i class="i2">播放：</i>
-				<em class="e2">
-																27万
+																29万
 									</em>
 				</span>
 
@@ -1413,7 +1187,33 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																29万
+																34万
+									</em>
+				</span>
+
+			</div>
+		</div>
+		</div>
+		<!-- End:pic_meta -->
+			<!-- Start:pic_meta-->
+		        	<div class="pic_meta pic_meta_red">
+								<a href="http://tv.sohu.com/20140511/n399414282.shtml?fid=518&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
+					<img src="http://photocdn.sohu.com/20140428/vrsab_ver6807749.jpg" width="100" height="135" alt="图片" />
+		</a>
+
+		<div class="default">
+			<span class="maskBg"></span>
+			<span class="maskTx"><i class="i1">2</i>震撼性教育</span>
+		</div>
+
+		<div class="over">
+			<span class="maskBg"></span>
+			<div class="maskTx">
+				<span class="cfix"><i class="i1">2</i><em class="e1">震撼性教育</em></span>
+				
+				<span class="cfix"><i class="i2">播放：</i>
+				<em class="e2">
+																28万
 									</em>
 				</span>
 
@@ -1429,43 +1229,17 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 
 		<div class="default">
 			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">2</i>我的P.S.搭档</span>
+			<span class="maskTx"><i class="i1">3</i>我的P.S.搭档</span>
 		</div>
 
 		<div class="over">
 			<span class="maskBg"></span>
 			<div class="maskTx">
-				<span class="cfix"><i class="i1">2</i><em class="e1">我的P.S.搭档</em></span>
+				<span class="cfix"><i class="i1">3</i><em class="e1">我的P.S.搭档</em></span>
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																27万
-									</em>
-				</span>
-
-			</div>
-		</div>
-		</div>
-		<!-- End:pic_meta -->
-			<!-- Start:pic_meta-->
-		        	<div class="pic_meta pic_meta_red">
-								<a href="http://tv.sohu.com/20120730/n349397234.shtml?fid=518&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
-					<img src="http://photocdn.sohu.com/20120710/vrsab_ver5025042.jpg" width="100" height="135" alt="图片" />
-		</a>
-
-		<div class="default">
-			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">3</i>两个女人</span>
-		</div>
-
-		<div class="over">
-			<span class="maskBg"></span>
-			<div class="maskTx">
-				<span class="cfix"><i class="i1">3</i><em class="e1">两个女人</em></span>
-				
-				<span class="cfix"><i class="i2">播放：</i>
-				<em class="e2">
-																26万
+																23万
 									</em>
 				</span>
 
@@ -1475,23 +1249,23 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 		<!-- End:pic_meta -->
 			<!-- Start:pic_meta-->
 		        	<div class="pic_meta">
-								<a href="http://tv.sohu.com/20140507/n399264441.shtml?fid=518&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
-					<img src="http://photocdn.sohu.com/20140428/vrsab_ver1012797.jpg" width="100" height="135" alt="图片" />
+								<a href="http://tv.sohu.com/20121109/n357175684.shtml?fid=518&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
+					<img src="http://photocdn.sohu.com/20120411/vrsab_ver1011330.jpg" width="100" height="135" alt="图片" />
 		</a>
 
 		<div class="default">
 			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">4</i>如沐爱河</span>
+			<span class="maskTx"><i class="i1">4</i>情癫大圣</span>
 		</div>
 
 		<div class="over">
 			<span class="maskBg"></span>
 			<div class="maskTx">
-				<span class="cfix"><i class="i1">4</i><em class="e1">如沐爱河</em></span>
+				<span class="cfix"><i class="i1">4</i><em class="e1">情癫大圣</em></span>
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																25万
+																23万
 									</em>
 				</span>
 
@@ -1501,23 +1275,23 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 		<!-- End:pic_meta -->
 			<!-- Start:pic_meta-->
 		        	<div class="pic_meta">
-								<a href="http://tv.sohu.com/20140428/n398940672.shtml?fid=518&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
-					<img src="http://photocdn.sohu.com/20140328/vrsab_ver5259664.jpg" width="100" height="135" alt="图片" />
+								<a href="http://tv.sohu.com/20090809/n265822452.shtml?fid=518&pvid=4d4db6d26aa0a4ec" class="pic" target="_blank">
+					<img src="http://photocdn.sohu.com/20090806/vrsab1358.jpg" width="100" height="135" alt="图片" />
 		</a>
 
 		<div class="default">
 			<span class="maskBg"></span>
-			<span class="maskTx"><i class="i1">5</i>饥饿游戏2：星火燎原</span>
+			<span class="maskTx"><i class="i1">5</i>夜店</span>
 		</div>
 
 		<div class="over">
 			<span class="maskBg"></span>
 			<div class="maskTx">
-				<span class="cfix"><i class="i1">5</i><em class="e1">饥饿游戏2：星火燎原</em></span>
+				<span class="cfix"><i class="i1">5</i><em class="e1">夜店</em></span>
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																25万
+																23万
 									</em>
 				</span>
 
@@ -1543,7 +1317,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																21万
+																19万
 									</em>
 				</span>
 
@@ -1572,7 +1346,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																770万
+																636万
 									</em>
 				</span>
 
@@ -1598,7 +1372,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																145万
+																124万
 									</em>
 				</span>
 
@@ -1624,7 +1398,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																102万
+																95万
 									</em>
 				</span>
 
@@ -1650,7 +1424,7 @@ http://photocdn.sohu.com/20140501/vrsab_ver6810324.jpg" width="140" height="190"
 				
 				<span class="cfix"><i class="i2">播放：</i>
 				<em class="e2">
-																72万
+																71万
 									</em>
 				</span>
 
@@ -1847,16 +1621,4 @@ vjTrack("");
 
 </body>
 </html>
-
-
-"""
-
-pipe = Pipelines(content)
-pipe.process()
-
-
-
-
-
-
 

@@ -11,6 +11,12 @@ def get_config_value(s, var_name):
 	s = s[:s.find(";")]
 	return s[s.find("\"")+1:s.rfind("\"")]
 
+def process_url(url):
+	#http://tv.sohu.com/20130813/n384034268.shtml
+	# ->
+	#http://m.tv.sohu.com/20130813/n384034268.shtml
+	pass
+
 
 # str_config = """
 #   var vid="1766750";

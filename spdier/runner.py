@@ -31,9 +31,12 @@ def main(config):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='tv.sohu Spider')
 	parser.add_argument('-m', type=int, dest="max_videos", help="config the max video count, 100 Default")
+	parser.add_argument('-t', type=int, dest="max_threads", help="config the max thread count, Default to read THREAD_MAX from config")
+
 	args = parser.parse_args()
 	config = {}
 	config['max_videos'] = 100 if not args.max_videos else args.max_videos
+	config['max_threads'] = None if not args.max_threads else args.max_threads
 
 	main(config)
 
