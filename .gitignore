@@ -48,7 +48,9 @@ coverage.xml
 # Django stuff:
 *.log
 *.pot
+*.pid
 
 # Sphinx documentation
 docs/_build/
 web/generator/node_modules/
+
