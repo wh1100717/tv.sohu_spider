@@ -126,7 +126,6 @@ class Pipelines:
 
 		try:
 			#视频地址
-			# 卡在获取来的http://123.126.104.14/sohu/6/|378|111.195.91.56|tDqYtJamfn2Ruijbm6pvdanVsMQtqOTFIIek7g..|1|0|2|4002|1根据何种规则进行替换这里。
 			vrs_flash_url = "http://hot.vrs.sohu.com/vrs_flash.action?vid=" + data['vid']
 			res = requests.get(vrs_flash_url)
 			vrs_flash = json.loads(res.text)
