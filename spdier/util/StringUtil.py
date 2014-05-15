@@ -15,6 +15,8 @@ def process_url(url):
 	#http://tv.sohu.com/20130813/n384034268.shtml
 	# ->
 	#http://m.tv.sohu.com/20130813/n384034268.shtml
+	#可能需要对url进行一些处理，预留出来
+	return url
 	pass
 
 

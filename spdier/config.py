@@ -14,6 +14,7 @@ UNTI_BAN = {
 
 TARGET = {
 	'host': 'http://tv.sohu.com/',
+	# 'host': 'http://tv.sohu.com/20140514/n399532703.shtml',
 	'grab_url_reg': 'tv\.sohu\.com',
 	'view_detail_page_reg': '^http\:\/\/tv\.sohu\.com\/\d+\/\w+\.shtml$'
 }
@@ -22,6 +23,6 @@ REQUEST = {
 	"headers": {
 		"X-Requested-With" : "XMLHttpRequest"
 	},
-	"encoding": 'utf-8'
+	"encoding": 'gbk'
 }
 

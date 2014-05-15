@@ -1,0 +1,11 @@
+{
+  "name": "sohutvshow",
+  "private": true,
+  "version": "0.0.1",
+  "description": "The Sohu Tv Frontend",
+  "dependencies": {
+    "jade": "~0.35.0",
+    "marked": "~0.2.10",
+    "stdin": "0.0.1"
+  }
+}
