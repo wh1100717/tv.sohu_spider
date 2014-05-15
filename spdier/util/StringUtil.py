@@ -1,11 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+'''
+Author: @wh1100717
+Repository: https://github.com/wh1100717/tv.sohu_spider
+'''
+
 
 def is_resource_url(url):
+	#判断是否是资源文件
 	if '?' in url: url = url[:url.find('?')]
 	return False if url.rfind('.') == -1 or url[url.find('.')+1:] not in 'jscsspngjpggifswfwavwoff' else True
 
 def get_config_value(s, var_name):
+	#解析<script><script>标签中的内容，根据变量名获取具体的值
 	if var_name not in s: return None
 	s = s[s.find(var_name):]
 	s = s[:s.find(";")]

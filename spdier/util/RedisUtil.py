@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+'''
+Author: @wh1100717
+因为redis-py有一些功能没实现，比如一次存储数组到redis中等
+并且一些名称不是特别适合记忆，就自己做了一层封装。
+没有太多时间，挑选了一些常用的操作进行封装。
+具体的可以内容可以查看下面的注释。
+'''
 
 import redis
 import UtilConfig

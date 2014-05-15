@@ -6,7 +6,7 @@
 <a href="http://autobahn.ws/" target="_blank">autobahn</a>、
 <a href="https://github.com/Supervisor/supervisor" target="_blank">supervisor</a>
 以及tracebock、re、time、random、thread、threading、queue、json、sh等库或者工具。
-由 tv.sohu.com 页面作为入口，实现了tv.sohu.com全站视频详细页信息的抓取。</p><p>该项目采用redis作为数据的存储方式，对外提供RESTful API接口，可以方便为各种系统提供需要的数据服务。</p><p>之所以采用redis的原因在于视频抓取过程中难免有些数据解析错误(部分数据需要再次构造请求，因此很有可能因为网络原因导致部分数据不能够完整抓取)，
+由 tv.sohu.com 页面作为入口，实现了tv.sohu.com全站视频详细页信息的抓取。目前能抓取详细页的所有信息(包括视频的真实地址，不过真实地址中的key是有有效期的，因此可以通过提供一个页面，如果需要则现生成就OK了。)</p><p>该项目采用redis作为数据的存储方式，对外提供RESTful API接口，可以方便为各种系统提供需要的数据服务。</p><p>之所以采用redis的原因在于视频抓取过程中难免有些数据解析错误(部分数据需要再次构造请求，因此很有可能因为网络原因导致部分数据不能够完整抓取)，
 这时候关系型数据库对于表的限制导致需要进行很多额外的工作才能保证数据的正常入库。</p><p>而像redis/mongoDB这样的NOSQL则免去了这方面的问题，而且业务需求和结构也导致了关系型数据库并非最好的方案(比如说我需要对抓取来的url进行存储，因为可能会抓取到重复的url，因此通过redis的set型存储可以很好的避免数据的冗余)。</p><p>redis实际上不是数据库，而是data store(中文网站总弄混这两者的区别)，redis类似于memcached，但是提供多种数据存储方案，而且支持自动持久化，因此总体来说是一个比较理想的存储方案。
 另外redis支持主从，分布式及相应扩展也非常容易。</p><p>redis也有其缺点，缺点主要在于查询和排序等方面。这方面mongoDB相对来说优势更大(mongoDB有独特的缓存优化机制，速度和redis不分伯仲，因此最佳方案我更倾向于mongodb，不过相对麻烦一点，而且时间不多，就还是用redis了)。
 不过该项目主要提供RESTful数据导出接口，查询并非很高级别的业务需求，因此个人觉得也没什么大的问题。

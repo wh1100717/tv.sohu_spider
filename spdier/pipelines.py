@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
+'''
+Author: @wh1100717
+Repository: https://github.com/wh1100717/tv.sohu_spider
+'''
 
 from util import RedisUtil
 from BeautifulSoup import BeautifulSoup
@@ -17,10 +21,16 @@ class Pipelines:
 		self.html = html
 
 	def process(self):
+		'''
+		 * 进行html的处理，预留接口，可以做成流水线处理的模式，可以将具体的数据分析进行拆解来充分解耦
+		'''
 		data = self.get_content()
 		return data
 
 	def get_content(self):
+		'''
+		 * 获取详细页面中的信息
+		'''
 		soup = BeautifulSoup(self.html)
 		data = {}
 
@@ -43,6 +53,31 @@ class Pipelines:
 		except Exception, e:
 			print "BeautifulSoup Error: ", Exception, e
 			return None
+
+		try:
+			#发布时间 | 时长 | 来源 | 简介
+			# str_cfix = soup.find('div', {'id':'playlist'})
+			# info = str_cfix
+			# data['publishTime'] = str_cfix.findAll('li')[0].contents[0][3:-1].strip()
+			# data['length'] = str_cfix.find('li',{'class':'s h'}).contents[0][3:].strip()
+			# data['from'] = str_cfix.find('li',{'class':'h'}).contents[0][3:].strip()
+			# data['intro'] = str_cfix.find('p',{'class':'intro'}).contents[0].strip()
+			
+			#标题
+			data['title'] = soup.title.contents[0]			
+
+			data['intro'] = soup.find('p', {'class':'intro'}).contents[0].strip()
+			info = soup.find('ul', {'class':'u cfix'})
+
+			info_list = info.findAll('li')
+			for i in info_list:
+				information = i.contents[0].strip()
+				index = information.find('：')
+				key = information[:index].strip()
+				val = information[index+1:].strip()
+				data[key] = val
+		except Exception, e:
+			raise e
 
 		try:
 			count_url = "http://count.vrs.sohu.com/count/stat.do?videoId=" + str(data['vid']) + \
@@ -72,24 +107,6 @@ class Pipelines:
 			data['upCount'] = status['upCount']
 			data['downCount'] = status['downCount']
 
-			#发布时间 | 时长 | 来源 | 简介
-			# str_cfix = soup.find('div', {'id':'playlist'})
-			# info = str_cfix
-			# data['publishTime'] = str_cfix.findAll('li')[0].contents[0][3:-1].strip()
-			# data['length'] = str_cfix.find('li',{'class':'s h'}).contents[0][3:].strip()
-			# data['from'] = str_cfix.find('li',{'class':'h'}).contents[0][3:].strip()
-			# data['intro'] = str_cfix.find('p',{'class':'intro'}).contents[0].strip()
-
-			data['intro'] = soup.find('p', {'class':'intro'}).contents[0].strip()
-			info = soup.find('ul', {'class':'u cfix'})
-
-			info_list = info.findAll('li')
-			for i in info_list:
-				information = i.contents[0].strip()
-				index = information.find('：')
-				key = information[:index].strip()
-				val = information[index+1:].strip()
-				data[key] = val			
 		except Exception, e:
 			raise e
 
@@ -106,12 +123,6 @@ class Pipelines:
 			data['reply'] = json.loads(str_reply)
 		except Exception, e:
 			print e
-
-		try:
-			#标题
-			data['title'] = soup.title.contents[0]			
-		except Exception, e:
-			raise e
 
 		try:
 			#视频地址

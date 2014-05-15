@@ -1,5 +1,9 @@
 #!/usr/bin/python
 #-*-coding:utf-8-*-
+'''
+Author: @wh1100717
+Repository: https://github.com/wh1100717/tv.sohu_spider
+'''
 
 import random
 
@@ -11,30 +15,18 @@ import random
 3.  VPN + Tor 做成rotated ip 
 4.  写脚本网上直接抓代理服务器，然后测试可用性，也能维护一个代理池
 '''
+def getRandomProxy():
+    return random.choice(proxy_pool)
+
 proxy_pool = [
     #{}"http://127.0.0.1:8088",
     #这里以goAgent为例
     "http://127.0.0.1:8087"
 ]
 
-def getRandomProxy():
-    return random.choice(proxy_pool)
-
-
-
-
-
-print getRandomProxy()
-
-
-
-
-
-
-
-
-
-
+'''
+构建userAnget
+'''
 
 def getRandomUserAgent():
 	return random.choice(user_agent_pool)
