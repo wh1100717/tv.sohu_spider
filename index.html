@@ -1,49 +1,51 @@
-<!DOCTYPE html>
-<html>
-
-  <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Tv.sohu spider : " />
-
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>Tv.sohu spider</title>
-  </head>
-
-  <body>
-
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/wh1100717/tv.sohu_spider">View on GitHub</a>
-
-          <h1 id="project_title">Tv.sohu spider</h1>
-          <h2 id="project_tagline"></h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/wh1100717/tv.sohu_spider/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/wh1100717/tv.sohu_spider/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <p>111</p>
-      </section>
-    </div>
-
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Tv.sohu spider maintained by <a href="https://github.com/wh1100717">wh1100717</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
-    
-
-  </body>
-</html>
+<!DOCTYPE html><html><head><title>STV Spider</title><link rel="stylesheet" href="static/style.css"><link rel="stylesheet" href="static/icons/css/slate.css"><link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Italiana&amp;subset=latin"><meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body><section id="top"><div id="menu"><a id="toggle" href="#"><i class="icon-menu"></i></a><ul><li><a href="#introduction">简介</a></li><li><a href="#installation">安装</a></li><li><a href="#links">链接</a></li></ul></div><div id="heading"><div id="logo">STV Spider</div><div id="tagline">Tiny spider aimed to grab the video information from tv.sohu.com</div></div></section><section><div class="content"><h1 id="introduction">简介</h1><p>该项目实现了搜狐视频抓取的功能，进一步可以扩展为一个小巧方便的爬虫框架。该爬虫由Python2.7编写，中间用到了
+<a href="https://docs.python.org/dev/library/argparse.html" target="_blank">argparse</a>、
+<a href="http://docs.python-requests.org/en/latest/" target="_blank">requests</a>、
+<a href="http://www.crummy.com/software/BeautifulSoup/bs3/documentation.html" target="_blank">BeautifulSoup</a>、
+<a href="https://github.com/andymccurdy/redis-py" target="_blank">Redis-py</a>、
+<a href="http://autobahn.ws/" target="_blank">autobahn</a>、
+<a href="https://github.com/Supervisor/supervisor" target="_blank">supervisor</a>
+以及tracebock、re、time、random、thread、threading、queue、json、sh等库或者工具。
+由 tv.sohu.com 页面作为入口，实现了tv.sohu.com全站视频详细页信息的抓取。</p><p>该项目采用redis作为数据的存储方式，对外提供RESTful API接口，可以方便为各种系统提供需要的数据服务。</p><p>之所以采用redis的原因在于视频抓取过程中难免有些数据解析错误(部分数据需要再次构造请求，因此很有可能因为网络原因导致部分数据不能够完整抓取)，
+这时候关系型数据库对于表的限制导致需要进行很多额外的工作才能保证数据的正常入库。</p><p>而像redis/mongoDB这样的NOSQL则免去了这方面的问题，而且业务需求和结构也导致了关系型数据库并非最好的方案(比如说我需要对抓取来的url进行存储，因为可能会抓取到重复的url，因此通过redis的set型存储可以很好的避免数据的冗余)。</p><p>redis实际上不是数据库，而是data store(中文网站总弄混这两者的区别)，redis类似于memcached，但是提供多种数据存储方案，而且支持自动持久化，因此总体来说是一个比较理想的存储方案。
+另外redis支持主从，分布式及相应扩展也非常容易。</p><p>redis也有其缺点，缺点主要在于查询和排序等方面。这方面mongoDB相对来说优势更大(mongoDB有独特的缓存优化机制，速度和redis不分伯仲，因此最佳方案我更倾向于mongodb，不过相对麻烦一点，而且时间不多，就还是用redis了)。
+不过该项目主要提供RESTful数据导出接口，查询并非很高级别的业务需求，因此个人觉得也没什么大的问题。
+</p></div></section><section><div class="content"><h1 id="installation">Installation</h1>
+<p>项目中用到了一些依赖库，所以需要首先安装对应的依赖库</p>
+<p>主要用到了一下库:</p>
+<ul>
+<li>requests==2.2.1</li>
+<li>BeautifulSoup==3.2.1</li>
+<li>Mako==0.9.1</li>
+<li>nose==1.3.0</li>
+<li>queuelib==1.1.1</li>
+<li>redis==2.9.1</li>
+<li>supervisor=3.0</li>
+<li>tornado==3.2</li>
+<li>Twisted=12.2.0</li>
+</ul>
+<pre><code>pip install -r requirements.txt</code></pre>
+<h3 id="-supervisor">启动supervisor</h3>
+<p>项目通过supervisor来运行项目，supervisor是一个用来统一管理python程序的工具，其配有相应的控制前端页面，并可以实现爬虫结束重爬等功能，利用其可以轻松管理多个spider以及其他python程序。具体的配置文件为 <code>spider/supervisor.conf</code>，通过以下命令启动supervisor</p>
+<pre><code>#进入 spider 目录下
+supervisord -c supervisor.conf
+#如果想实现开机自启动可以查看supervisor的文档</code></pre>
+<p>接下来可以通过<code>localhost:9001</code>来查看具体的爬虫状态，用户名为<code>admin</code>，密码为<code>admin</code>(可以在supervisor.conf中更改和配置)</p>
+<h3 id="-log-monitor">启动Log Monitor</h3>
+<p>two files should be included in your log system -- server.py(which would generate a server watching the log file and broadcast the data to the browser) and log.html(it contains the html and js code which would be included in your website.)</p>
+<ul>
+<li>just step into the directory that contains the server.py and use command <code>python server.py log_path port</code>(log_path means the absolute path of the log file which you want to bring to the web; port means the server port you specified.)</li>
+<li>modify the log.html with your own ip address(or hostname) and port and put the code in some page of your website.</li>
+<li>Then, just wath the page in browser and see what will happen!</li>
+<li>If you want to stop the server, just use <code>ctrl+c</code> to stop it. NEVER use <code>ctrl+d</code>, there is a thread process which will not be killed in this way(well, u can use <code>ps -ef | grep server.py</code> to see whch one should be killed and then use <code>kill -9 process_id</code>. THAT is NOT recommended!).</li>
+</ul>
+<p>Note:已经在supervisor.conf中配置好了。Log Monitor依赖库安装安装成功的话，可以直接启动supervisor使用，不需要额外配置</p>
+<h3 id="-">启动前端页面</h3>
+<p>项目中主页是用jade生成的，如果运行则需要node环境。然后进入 <code>web/generator/</code> 目录执行：</p>
+<pre><code>$ npm install
+$ make -j4</code></pre>
+<p>运行主页需要进入 <code>web</code> 目录执行：</p>
+<pre><code>$ sudo python server.py
+$ open http://localhost</code></pre>
+<p>至此，可以关于项目的搭建和运行就介绍完了。</p>
+</div></section><section><div class="content"><h1 id="links">链接</h1><p>项目托管在Github上，详细信息请查看以下链接</p><ul><li><a href="https://github.com/wh1100717/tv.sohu_spider">GitHub项目</a></li><li><a href="http://sohutv.emptystack.net">项目文档</a></li><li><a href="https://github.com/wh1100717">作者Github</a></li><li><a href="http://me.emptystack.net">关于作者</a></li></ul></div></section></body></html>
