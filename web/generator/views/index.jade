@@ -13,10 +13,10 @@ html
         a#toggle(href='#'): i.icon-menu
         ul
           li: a(href='#introduction') 简介
-          li: a(href='#installation') 应用
-          li: a(href='#context') 内容
-          li: a(href='#request') 请求
-          li: a(href='#response') 响应
+          li: a(href='#installation') 安装
+          //- li: a(href='#context') 内容
+          //- li: a(href='#request') 请求
+          //- li: a(href='#response') 响应
           li: a(href='#links') 链接
 
       #heading
@@ -35,7 +35,7 @@ html
           <a href="http://autobahn.ws/" target="_blank">autobahn</a>、
           <a href="https://github.com/Supervisor/supervisor" target="_blank">supervisor</a>
           以及tracebock、re、time、random、thread、threading、queue、json、sh等库或者工具。
-          由`tv.sohu.com`页面作为入口，实现了tv.sohu.com全站视频详细页信息的抓取。
+          由 tv.sohu.com 页面作为入口，实现了tv.sohu.com全站视频详细页信息的抓取。
         p.
           该项目采用redis作为数据的存储方式，对外提供RESTful API接口，可以方便为各种系统提供需要的数据服务。
         p.
@@ -54,17 +54,17 @@ html
       .content
         include ../static/index.md
 
-    section
-      .content
-        include ../static/context.md
+    //- section
+    //-   .content
+    //-     include ../static/context.md
 
-    section
-      .content
-        include ../static/request.md
+    //- section
+    //-   .content
+    //-     include ../static/request.md
 
-    section
-      .content
-        include ../static/response.md
+    //- section
+    //-   .content
+    //-     include ../static/response.md
 
     section
       .content
