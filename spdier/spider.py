@@ -160,7 +160,11 @@ class Spider:
 			print "    Thread: Exit --- %s " %threadName
 			thread.exit_thread()
 
-
+	def get_mp4(self, url):
+		html = self._get_html(url)
+		pipe = pipelines.Pipelines(html)
+		data = pipe.process()
+		print data['video_url']
 
 	def start(self,config):
 		print "start"

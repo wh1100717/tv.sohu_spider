@@ -24,6 +24,7 @@ Test with Nose  TODO
 错误处理 Done
 '''
 
+import spider
 import argparse
 import sys
 import os
@@ -32,9 +33,12 @@ sys.setdefaultencoding('utf-8')
 
 def main(config):
 	#加载爬虫库并执行
-	import spider
 	s = spider.Spider()
 	s.start(config)
+
+def get_mp4(url):
+	s = spider.Spider()
+	s.get_mp4(url)
 
 if __name__ == '__main__':
 	#通过argParse进行命令行配置
@@ -44,13 +48,19 @@ if __name__ == '__main__':
 	#max_threads表示最多同时运行的线程数
 	parser.add_argument('-t', type=int, dest="max_threads", help="config the max thread count, Default to read THREAD_MAX from config")
 
+	parser.add_argument('-r', type=str, dest="video_url", help="only get the real mp4 address of the video")
+
 	args = parser.parse_args()
 	config = {}
-	config['max_videos'] = 100 if not args.max_videos else args.max_videos
-	config['max_threads'] = None if not args.max_threads else args.max_threads
 
-	#程序入口
-	main(config)
+	if args.video_url:
+		get_mp4(args.video_url)
+	else:
+		config['max_videos'] = 100 if not args.max_videos else args.max_videos
+		config['max_threads'] = None if not args.max_threads else args.max_threads
+
+		#程序入口
+		main(config)
 
 
 
